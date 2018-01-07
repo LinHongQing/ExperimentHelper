@@ -1,67 +1,84 @@
-﻿using System;
+﻿using ExperimentHelper.Basic;
+using ExperimentHelper.Controll;
+using ExperimentHelper.Interface;
+using ExperimentHelper.Model;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 
 namespace ExperimentHelper
 {
-    public partial class ExportChooseForm : Form
+    public partial class ExportChooseForm : Form, IExportPointMatrixObserver
     {
-
-        private bool[,] t_export_config;
+        private IExportChooseFormControll controller;
+        private IExportChooseFormModel model;
+        private ExportPointMatrix matrix = ExportPointMatrix.GetInstance();
+        private Dictionary<string, Button> btnDictionary = new Dictionary<string, Button>();
 
         public ExportChooseForm()
         {
             InitializeComponent();
-            t_export_config = new bool[Settings.ROWS_COUNT, Settings.COLUMNS_COUNT];
-            // 将临时导出设置与原设置同步
-            for (int i = 0; i < Settings.ROWS_COUNT; i++)
-            {
-                for (int j = 0; j < Settings.COLUMNS_COUNT; j++)
-                {
-                    t_export_config[i, j] = Settings.EXPORT_CONFIG[i, j];
-                }
-            }
+            model = new ExportChooseFormModel(matrix);
+            model.RegisterExportPointMatrixObserver(this);
+            controller = new ExportChooseFormController(model, this);
+            int rowCount = model.GetRowCount();
+            int columnCount = model.GetColumnCount();
 
             // 初始化 TableLayoutPanel
             controlTableLayoutPanel.Controls.Clear();
             controlTableLayoutPanel.ColumnStyles.Clear();
             controlTableLayoutPanel.RowStyles.Clear();
             // 初始化 TableLayoutPanel 的列
-            controlTableLayoutPanel.ColumnCount = Settings.COLUMNS_COUNT;
-            for (int i = 0; i < Settings.COLUMNS_COUNT; i++)
+            controlTableLayoutPanel.ColumnCount = columnCount;
+            for (int i = 0; i < columnCount; i++)
             {
-                controlTableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F / Settings.COLUMNS_COUNT));
+                controlTableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F / columnCount));
             }
             // 初始化 TableLayoutPanel 的行
-            controlTableLayoutPanel.RowCount = Settings.ROWS_COUNT;
-            for (int i = 0; i < Settings.ROWS_COUNT; i++)
+            controlTableLayoutPanel.RowCount = rowCount;
+            for (int i = 0; i < rowCount; i++)
             {
-                controlTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F / Settings.ROWS_COUNT));
+                controlTableLayoutPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F / rowCount));
             }
             // 往 TableLayoutPanel 中添加按钮
-            for (int i = 0; i < Settings.ROWS_COUNT; i++)
+            for (int i = 0; i < rowCount; i++)
             {
-                for (int j = 0; j < Settings.COLUMNS_COUNT; j++)
+                for (int j = 0; j < columnCount; j++)
                 {
                     Button btn = new Button
                     {
                         Name = "button_" + j + "_" + i,
-                        Text = Settings.COLUMNS_DESCRIPTION[j] + Settings.ROWS_DESCRIPTION[i],
+                        Text = model.GetExportPointText(i, j),
                         Dock = DockStyle.Fill,
                     };
-                    if (t_export_config[i, j])
+                    if (model.GetExportPointAvaliable(i, j))
                         btn.ForeColor = Color.Red;
                     // 为每一个按钮添加鼠标点击事件回调函数
                     btn.MouseClick += new MouseEventHandler(Button_MouseClick);
                     controlTableLayoutPanel.Controls.Add(btn);
+                    btnDictionary.Add(GetDictionaryKey(i, j), btn);
                 }
             }
         }
 
+        private string GetDictionaryKey(int row, int column)
+        {
+            return string.Format("{0}+{1}", row, column);
+        }
+
+        public void ExportPointUpdate(int row, int column)
+        {
+            string btnText = model.GetExportPointText(row, column);
+            bool btnAvaliable = model.GetExportPointAvaliable(row, column);
+            if (btnDictionary.TryGetValue(GetDictionaryKey(row, column), out Button btn))
+            {
+                if (model.GetExportPointAvaliable(row, column))
+                    btn.ForeColor = Color.Red;
+                else
+                    btn.ForeColor = Color.Black;
+            }
+        }
 
         private void Button_MouseClick(object sender, MouseEventArgs e)
         {
@@ -75,34 +92,27 @@ namespace ExperimentHelper
                 return;
             int column = int.Parse(parameters[1]);
             int row = int.Parse(parameters[2]);
-            t_export_config[row, column] = !t_export_config[row, column];
-            if (t_export_config[row, column])
-            {
-                button.ForeColor = Color.Red;
-            }
-            else
-            {
-                button.ForeColor = Color.Black;
-            }
+            controller.ChangeExportPointStatus(row, column);
         }
 
         private void CancelButton_Click(object sender, EventArgs e)
         {
-            Dispose();
+            controller.Cancel();
         }
 
         private void ConfirmButton_Click(object sender, EventArgs e)
         {
-            // 将设置值同步
-            for (int i = 0; i < Settings.ROWS_COUNT; i++)
-            {
-                for (int j = 0; j < Settings.COLUMNS_COUNT; j++)
-                {
-                    Settings.EXPORT_CONFIG[i, j] = t_export_config[i, j];   // 同步设置到原设置中
-                }
-            }
-            Dispose();
+            controller.Comfirm();
+        }
+
+        public void EnableConfirmButton()
+        {
+            confirmButton.Enabled = true;
+        }
+
+        public void DisableConfirmButton()
+        {
+            confirmButton.Enabled = false;
         }
     }
-
 }

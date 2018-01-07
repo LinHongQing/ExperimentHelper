@@ -10,6 +10,8 @@
     <AssemblyName>ExperimentHelper</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <TargetFrameworkProfile />
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -22,10 +24,8 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -67,29 +67,64 @@
     <Compile Include="AboutBox.Designer.cs">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </Compile>
-    <Compile Include="Base.cs" />
-    <Compile Include="ProcessGenerator.cs" />
-    <Compile Include="Settings.cs" />
+    <Compile Include="Basic\ExportPointMatrix.cs" />
+    <Compile Include="Basic\ExportPointMatrixException.cs" />
+    <Compile Include="Basic\ExportPointMatrixItem.cs" />
+    <Compile Include="Basic\SettingComponent.cs" />
+    <Compile Include="Controll\MainFormController.cs" />
+    <Compile Include="Interface\IMainFormControll.cs" />
+    <Compile Include="Interface\ITargetRectangleObserable.cs" />
+    <Compile Include="Interface\ITargetRectangleObserver.cs" />
+    <Compile Include="Util\ProcessHelper.cs" />
+    <Compile Include="Basic\TargetRectangle.cs" />
+    <Compile Include="Basic\StructComponent.cs" />
+    <Compile Include="Controll\ExportChooseFormController.cs" />
+    <Compile Include="Interface\IExportChooseFormControll.cs" />
+    <Compile Include="Interface\IExportChooseFormModel.cs" />
+    <Compile Include="Interface\IExportPointMatrixObserable.cs" />
+    <Compile Include="Interface\IExportPointMatrixObserver.cs" />
+    <Compile Include="Interface\IIterator.cs" />
+    <Compile Include="Interface\IMainFormModel.cs" />
+    <Compile Include="Interface\IResultObserable.cs" />
+    <Compile Include="Interface\IResultObserver.cs" />
+    <Compile Include="Interface\IWindowHandleObserverable.cs" />
+    <Compile Include="Interface\IProcessItem.cs" />
+    <Compile Include="Interface\ISettingModel.cs" />
+    <Compile Include="Interface\IWindowHandleObserver.cs" />
+    <Compile Include="Model\ExportChooseFormModel.cs" />
+    <Compile Include="Model\GeneralSettingModel.cs" />
+    <Compile Include="Model\MainFormModel.cs" />
+    <Compile Include="Process\ProcessException.cs" />
+    <Compile Include="Process\ProcessItem_CalcRectExportPointMatrix.cs" />
+    <Compile Include="Process\ProcessItem_SetComboBoxCrusel.cs" />
+    <Compile Include="Process\ProcessItem_FindCtrlByCtrlClass.cs" />
+    <Compile Include="Process\ProcessItem_FindCtrlByCtrlName.cs" />
+    <Compile Include="Process\ProcessItem_FindWindowByName.cs" />
+    <Compile Include="Process\ProcessItem_GetControlRectangle.cs" />
+    <Compile Include="Process\ProcessItem_NormMouseLeftButtonClick.cs" />
+    <Compile Include="Process\ProcessItem_FindWindowEx.cs" />
+    <Compile Include="Process\ProcessItem_FindWindow.cs" />
+    <Compile Include="Process\ProcessItem_CtrlMouseLeftButtonClick.cs" />
+    <Compile Include="Process\ProcessItem_MouseMove.cs" />
+    <Compile Include="Process\ProcessItem_OverwriteCurrHndl2PrntHndl.cs" />
+    <Compile Include="Process\ProcessItem_SetTextBoxValue.cs" />
     <Compile Include="ExportChooseForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="ExportChooseForm.Designer.cs">
       <DependentUpon>ExportChooseForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="KeyboardHook.cs" />
-    <Compile Include="ResultItem.cs" />
+    <Compile Include="Basic\ResultItem.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="ProcessItem.cs" />
-    <Compile Include="Process.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Win32.cs" />
-    <Compile Include="WndItem.cs" />
+    <Compile Include="Util\Win32.cs" />
+    <Compile Include="Basic\WindowHandle.cs" />
     <EmbeddedResource Include="AboutBox.resx">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </EmbeddedResource>
@@ -130,5 +165,6 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

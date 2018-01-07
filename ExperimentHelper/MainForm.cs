@@ -1,36 +1,91 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿using ExperimentHelper.Basic;
+using System;
 using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using System.Threading;
+using ExperimentHelper.Interface;
+using System.Collections.Generic;
+using ExperimentHelper.Util;
+using ExperimentHelper.Controll;
+using ExperimentHelper.Model;
 
 namespace ExperimentHelper
 {
-    public partial class MainForm : Form
+    public partial class MainForm : Form, IResultObserver, IWindowHandleObserver, ITargetRectangleObserver
     {
-        private WndItem wndItem = new WndItem(IntPtr.Zero, IntPtr.Zero);        // 初始化主界面句柄
-        private Base.RECT rect;                                               // 目标控件的范围
-        private Base.POINT[,] matrix;                                         // 目标控件点选目标点矩阵
-        private Process process;
-        private Thread t;
+        private IMainFormModel mainFormModel;
+        private IMainFormControll mainFormController;
+        private Dictionary<ControlsName, Control> controlsDict;
+        public enum ControlsName
+        {
+            TEXTBOX_INPUT_TITLE, TEXTBOX_INPUT_STRING_PARAM, TEXTBOX_INPUT_INT_PARAM,
+            COMBOBOX_SELECT_OPERATION,
+            BTN_CHECK_TITLE, BTN_GET_RECTANGLE, BTN_SELECT_EXPORT_POINT, BTN_CHECK_EXPORT_POINT_TARGET, BTN_BEGIN,
+            BTN_ABOUT, BTN_DEBUG, NUMBERICUPDOWN_SHORT_DELAY, NUMBERICUPDOWN_MEDIUM_DELAY, NUMBERICUPDOWN_LONG_DELAY
+        }
 
-        public MainForm()
+        private class ComboBoxItem
+        {
+            private int id;
+            private string description;
+            public int Value { get => id; set => id = value; }
+            public string Text { get => description; set => description = value; }
+            public override string ToString()
+            {
+                return Text;
+            }
+        }
+
+        public MainForm(WindowHandle handle, TargetRectangle rectangle, SettingComponent settings, ExportPointMatrix matrix)
         {
             InitializeComponent();
-            rect = new Base.RECT
+            InitControlsDict();
+            InitComboBox();
+            mainFormModel = new MainFormModel(settings, matrix, rectangle, handle);
+            mainFormController = new MainFormController(mainFormModel, this);
+            handle.RegisterWindowHandleObserver(this);
+            rectangle.RegisterTargetRectangleObserver(this);
+            mainFormModel.RegisterResultItemObserver(this);
+        }
+
+        private void InitControlsDict()
+        {
+            controlsDict = new Dictionary<ControlsName, Control>
             {
-                IsInit = false
+                { ControlsName.TEXTBOX_INPUT_TITLE, targetFormTitleInputTextBox },
+                { ControlsName.TEXTBOX_INPUT_INT_PARAM, currentWndIntParameterTextBox},
+                { ControlsName.TEXTBOX_INPUT_STRING_PARAM, currentWndStringParameterTextBox},
+                { ControlsName.COMBOBOX_SELECT_OPERATION, currentWndProcessComboBox},
+                { ControlsName.BTN_CHECK_TITLE, findFormButton },
+                { ControlsName.BTN_GET_RECTANGLE, findTargetButton },
+                { ControlsName.BTN_SELECT_EXPORT_POINT, chooseExportPositionButton },
+                { ControlsName.BTN_CHECK_EXPORT_POINT_TARGET, checkPositionButton },
+                { ControlsName.BTN_BEGIN, startButton },
+                { ControlsName.BTN_ABOUT, aboutButton },
+                { ControlsName.BTN_DEBUG, excuteDebugProcessButton },
+                { ControlsName.NUMBERICUPDOWN_SHORT_DELAY, shortDelayNumericUpDown },
+                { ControlsName.NUMBERICUPDOWN_MEDIUM_DELAY, mediumDaleyNumericUpDown },
+                { ControlsName.NUMBERICUPDOWN_LONG_DELAY, longDelayNumericUpDown }
             };
-            Settings.LoadSettings();
-            currentWndProcessComboBox.DataSource = Enum.GetNames(typeof(Process.ProcessTypeFlags));
-            SyncSettingsToUI();
-            parentWndValueTextBox.Text = String.Format("0x{0:x8}", wndItem.ParentWnd.ToInt32());
-            currentWndValueTextBox.Text = String.Format("0x{0:x8}", wndItem.CurrentWnd.ToInt32());
-            currentWndIntParameterTextBox.Text = "0";
-            targetLocationLabel.Text = rect.ToString();
+        }
+
+        private void InitComboBox()
+        {
+            controlsDict.TryGetValue(ControlsName.COMBOBOX_SELECT_OPERATION, out Control control);
+            if (control is ComboBox comboBox)
+            {
+                ComboBoxItem item;
+                foreach (ProcessHelper.ProcessTypeFlags flag in Enum.GetValues(typeof(ProcessHelper.ProcessTypeFlags)))
+                {
+                    item = new ComboBoxItem
+                    {
+                        Text = Enum.GetName(typeof(ProcessHelper.ProcessTypeFlags), flag),
+                        Value = (int)flag
+                    };
+                    comboBox.Items.Add(item);
+                }
+                comboBox.SelectedIndex = 0;
+            }
         }
 
         #region 设置控件是否启用
@@ -49,78 +104,58 @@ namespace ExperimentHelper
         }
         #endregion
 
-        #region 设置 Button 的 Text
-        delegate void SetButtonTextCallback(Button Btn, string Text);
-        private void SetButtonText(Button Btn, string Text)
+        #region 设置控件的 Text
+        delegate void SetControlTextCallback(Control control, string value);
+        private void SetControlText(Control control, string value)
         {
-            if (Btn.InvokeRequired)
+            if (control.InvokeRequired)
             {
 #if DEBUG
-                Console.WriteLine("Button 需进行 invoke 操作");
+                Console.WriteLine("控件 Control 需进行 invoke 操作");
 #endif
-                var d = new SetButtonTextCallback(SetButtonText);
-                Invoke(d, Btn, Text);
+                var d = new SetControlTextCallback(SetControlText);
+                Invoke(d, control, value);
             }
             else
             {
-                Btn.Text = Text;
-            }
-        }
-        #endregion
-
-        #region 设置 TextBox 的 Text
-        delegate void SetTextBoxTextCallback(TextBox Tb, string Rs);
-        private void SetTextBoxText(TextBox Tb, string Rs)
-        {
-            if (Tb.InvokeRequired)
-            {
-#if DEBUG
-                Console.WriteLine("TextBox 需进行 invoke 操作");
-#endif
-                var d = new SetTextBoxTextCallback(SetTextBoxText);
-                Invoke(d, Tb, Rs);
-            }
-            else
-            {
-                Tb.Text = Rs;
+                control.Text = value;
             }
         }
         #endregion
 
         #region 设置 RichTextBox
-        delegate void SetRichTextBoxCallback(RichTextBox Rtb, ResultItem Rs);
-        private void SetRichTextBox(RichTextBox Rtb, ResultItem Rs)
+        delegate void SetRichTextBoxCallback(RichTextBox richTextBox, ResultItem result);
+        private void SetRichTextBox(RichTextBox richTextBox, ResultItem result)
         {
-            if (Rtb.InvokeRequired)
+            if (richTextBox.InvokeRequired)
             {
 #if DEBUG
                 Console.WriteLine("RichTextBox 需进行 invoke 操作");
 #endif
                 var d = new SetRichTextBoxCallback(SetRichTextBox);
-                Invoke(d, Rtb, Rs);
+                Invoke(d, richTextBox, result);
             }
             else
             {
 #if DEBUG
-                Console.WriteLine("新写入 log 数据: " + Rs.ToString());
+                Console.WriteLine("新写入 log 数据: " + result.ToString());
 #endif
-                targetLocationLabel.Text = rect.ToString();
-                Rtb.AppendText(Rs.ToString() + Environment.NewLine);
-                Rtb.Select(logRichTextBox.Text.Length - Rs.ToString().Length - 1, logRichTextBox.Text.Length - 1);
-                switch (Rs.LogState)
+                richTextBox.AppendText(result.ToString() + Environment.NewLine);
+                richTextBox.Select(logRichTextBox.Text.Length - result.ToString().Length - 1, logRichTextBox.Text.Length - 1);
+                switch (result.LogState)
                 {
                     case ResultItem.States.OK:
-                        Rtb.SelectionColor = Color.LightGreen;
+                        richTextBox.SelectionColor = Color.LightGreen;
                         break;
                     case ResultItem.States.WARNING:
-                        Rtb.SelectionColor = Color.Yellow;
+                        richTextBox.SelectionColor = Color.Yellow;
                         break;
                     case ResultItem.States.ERROR:
-                        Rtb.SelectionColor = Color.OrangeRed;
+                        richTextBox.SelectionColor = Color.OrangeRed;
                         break;
                 }
-                Rtb.SelectionStart = Rtb.Text.Length;
-                Rtb.ScrollToCaret();
+                richTextBox.SelectionStart = richTextBox.Text.Length;
+                richTextBox.ScrollToCaret();
             }
         }
         #endregion
@@ -131,233 +166,116 @@ namespace ExperimentHelper
             if (e.KeyChar >= 31 && (e.KeyChar < '0' || e.KeyChar > '9')) { e.Handled = true; }
         }
 
-        private void OnResultReceive(ResultItem rs)
+        public void SyncSettingsToUI()
         {
-            if (rs.RectangleSet)
+            SettingComponent settings = SettingComponent.GetInstance();
+            controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_TITLE, out Control ctrl);
+            ctrl.Text = settings.SearchTitle;
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_SHORT_DELAY, out ctrl);
+            ctrl.Text = settings.ShortStepDelay.ToString();
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_MEDIUM_DELAY, out ctrl);
+            ctrl.Text = settings.MediumStepDelay.ToString();
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_LONG_DELAY, out ctrl);
+            ctrl.Text = settings.LongStepDelay.ToString();
+            controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_STRING_PARAM, out ctrl);
+            ctrl.Text = settings.StringParam;
+            controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_INT_PARAM, out ctrl);
+            ctrl.Text = settings.IntParam.ToString();
+            //controlsDict.TryGetValue(ControlsName.COMBOBOX_SELECT_OPERATION, out ctrl);
+            //ComboBox comboBox = (ComboBox) ctrl;
+        }
+
+        public void SyncUIToSettings()
+        {
+            SettingComponent settings = SettingComponent.GetInstance();
+            controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_TITLE, out Control ctrl);
+            settings.SearchTitle = ctrl.Text;
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_SHORT_DELAY, out ctrl);
+            settings.ShortStepDelay = int.Parse(ctrl.Text);
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_MEDIUM_DELAY, out ctrl);
+            settings.MediumStepDelay = int.Parse(ctrl.Text);
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_LONG_DELAY, out ctrl);
+            settings.LongStepDelay = int.Parse(ctrl.Text);
+            controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_STRING_PARAM, out ctrl);
+            settings.StringParam = ctrl.Text;
+            controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_INT_PARAM, out ctrl);
+            settings.IntParam = int.Parse(ctrl.Text);
+            controlsDict.TryGetValue(ControlsName.COMBOBOX_SELECT_OPERATION, out ctrl);
+            ComboBox comboBox = (ComboBox)ctrl;
+            ComboBoxItem selectedItem = (ComboBoxItem) comboBox.SelectedItem;
+            settings.ProcessType = (ProcessHelper.ProcessTypeFlags) Enum.Parse(typeof(ProcessHelper.ProcessTypeFlags), selectedItem.Text, false);
+        }
+
+        public void EnableAllControls()
+        {
+            foreach (Control ctrl in controlsDict.Values)
             {
-                rect = rs.Rectangle;
+                SetControlEnabled(ctrl, true);
             }
-            if (rs.MatrixSet)
+        }
+
+        public void DisableAllControls()
+        {
+            foreach (Control ctrl in controlsDict.Values)
             {
-                matrix = rs.Matrix;
+                SetControlEnabled(ctrl, false);
             }
-#if DEBUG
-            Console.WriteLine("新写入 log 数据: " + rs.ToString());
-#endif
-            SetRichTextBox(logRichTextBox, rs);
-            // Update(rs);
         }
 
-        private void OnWndChange(WndItem wnd)
+        public void SetControlEnabled(ControlsName name, bool isEnabled)
         {
-#if DEBUG
-            Console.WriteLine("更新了句柄数据: [{0}]", wnd.ToString());
-#endif
-            SetTextBoxText(parentWndValueTextBox, String.Format("0x{0:x8}", wnd.ParentWnd.ToInt32()));
-            SetTextBoxText(currentWndValueTextBox, String.Format("0x{0:x8}", wnd.CurrentWnd.ToInt32()));
-            // Update(wnd);
-        }
-
-        private void OnProcessFinish(bool needMoreProc, Process nextProc)
-        {
-            if (needMoreProc && nextProc != null)
+            if (controlsDict.TryGetValue(name, out Control control))
             {
-                nextProc.ResultSend += new Process.ResultSendNotifer(OnResultReceive);
-                nextProc.WndChange += new Process.WndChangeNotifier(OnWndChange);
-                nextProc.ProcessFinish += new Process.ProcessFinishNotifer(OnProcessFinish);
-                t = new Thread(new ThreadStart(nextProc.Go))
-                {
-                    IsBackground = true
-                };
-                t.Start();
+                SetControlEnabled(control, isEnabled);
             }
-            else
+        }
+
+        public void SetControlText(ControlsName name, string value)
+        {
+            if (controlsDict.TryGetValue(name, out Control control))
             {
-                EnableControls();
-                SetButtonText(startButton, "开始");
+                SetControlText(control, value);
             }
-        }
-
-        private void EnableControls()
-        {
-            SetControlEnabled(targetFormTitleInputTextBox, true);
-            SetControlEnabled(findFormButton, true);
-            SetControlEnabled(findTargetButton, true);
-            SetControlEnabled(checkPositionButton, true);
-            SetControlEnabled(chooseExportPositionButton, true);
-            SetControlEnabled(checkPositionButton, true);
-            SetControlEnabled(shortDelayNumericUpDown, true);
-            SetControlEnabled(mediumDaleyNumericUpDown, true);
-            SetControlEnabled(longDelayNumericUpDown, true);
-        }
-
-        private void DisableControls()
-        {
-            SetControlEnabled(targetFormTitleInputTextBox, false);
-            SetControlEnabled(findFormButton, false);
-            SetControlEnabled(findTargetButton, false);
-            SetControlEnabled(checkPositionButton, false);
-            SetControlEnabled(chooseExportPositionButton, false);
-            SetControlEnabled(checkPositionButton, false);
-            SetControlEnabled(shortDelayNumericUpDown, false);
-            SetControlEnabled(mediumDaleyNumericUpDown, false);
-            SetControlEnabled(longDelayNumericUpDown, false);
-        }
-
-        private void SyncSettingsToMemory()
-        {
-            Settings.SHORT_STEP_DELAY = (int)shortDelayNumericUpDown.Value;
-            Settings.MEDIUM_STEP_DELAY = (int)mediumDaleyNumericUpDown.Value;
-            Settings.LONG_STEP_DELAY = (int)longDelayNumericUpDown.Value;
-        }
-
-        private void SyncSettingsToUI()
-        {
-            shortDelayNumericUpDown.Value = Settings.SHORT_STEP_DELAY;
-            mediumDaleyNumericUpDown.Value = Settings.MEDIUM_STEP_DELAY;
-            longDelayNumericUpDown.Value = Settings.LONG_STEP_DELAY;
         }
 
         private void AboutButton_Click(object sender, EventArgs e)
         {
-            AboutBox aboutBox = new AboutBox();
-            aboutBox.ShowDialog();
+            mainFormController.About();
         }
 
         private void ExcuteDebugProcessButton_Click(object sender, EventArgs e)
         {
-            SyncSettingsToMemory();
-            ProcessItem proc = new ProcessItem
-            {
-                ProcessType = (Process.ProcessTypeFlags)Enum.Parse(typeof(Process.ProcessTypeFlags), currentWndProcessComboBox.SelectedItem.ToString(), false),
-                StringParameter = currentWndStringParameterTextBox.Text,
-                IntegerParameter = currentWndIntParameterTextBox.Text.Length == 0 ? 0 : int.Parse(currentWndIntParameterTextBox.Text),
-                StepDelay = Settings.SHORT_STEP_DELAY,
-                Rectangle = rect,
-            };
-            process = new Process(proc, ref wndItem, false, null);
-            process.ResultSend += new Process.ResultSendNotifer(OnResultReceive);
-            process.WndChange += new Process.WndChangeNotifier(OnWndChange);
-            process.ProcessFinish += new Process.ProcessFinishNotifer(OnProcessFinish);
-            t = new Thread(new ThreadStart(process.Go))
-            {
-                IsBackground = true
-            };
-            t.Start();
+            mainFormController.ExecuteOperation();
         }
 
         private void StartButton_Click(object sender, EventArgs e)
         {
-            SyncSettingsToMemory();
-            if (process != null && process.IsRunning == true)
-            {
-                process.IsRunning = false;
-                SetControlEnabled(startButton, false);
-            }
-            else
-            {
-                SetButtonText(startButton, "停止");
-            }
-            DisableControls();
-            process = new Process(
-                ProcessGenerator.GenerateFinalProcess(ref matrix, targetFormTitleInputTextBox.Text),
-                ref wndItem,
-                false,
-                null);
-            process.ResultSend += new Process.ResultSendNotifer(OnResultReceive);
-            process.WndChange += new Process.WndChangeNotifier(OnWndChange);
-            process.ProcessFinish += new Process.ProcessFinishNotifer(OnProcessFinish);
-            t = new Thread(new ThreadStart(process.Go))
-            {
-                IsBackground = true
-            };
-            t.Start();
+            mainFormController.Start();
         }
 
         private void ChooseExportPositionButton_Click(object sender, EventArgs e)
         {
-            ExportChooseForm ec = new ExportChooseForm();
-            ec.ShowDialog();
-#if DEBUG
-            if (matrix == null)
-                return;
-            for (int i = 0; i < Settings.ROWS_COUNT; i++)
-            {
-                for (int j = 0; j < Settings.COLUMNS_COUNT; j++)
-                {
-                    Console.Write("{0} ", Settings.EXPORT_CONFIG[i, j]);
-                }
-                Console.WriteLine();
-            }
-#endif
+            mainFormController.ChooseExportPoint();
         }
 
         private void FindFormButton_Click(object sender, EventArgs e)
         {
-            DisableControls();
-            SyncSettingsToMemory();
-            process = new Process(
-                ProcessGenerator.GenerateFindFormProcess(targetFormTitleInputTextBox.Text),
-                ref wndItem,
-                false,
-                null);
-            process.ResultSend += new Process.ResultSendNotifer(OnResultReceive);
-            process.WndChange += new Process.WndChangeNotifier(OnWndChange);
-            process.ProcessFinish += new Process.ProcessFinishNotifer(OnProcessFinish);
-            t = new Thread(new ThreadStart(process.Go));
-            t.Start();
+            mainFormController.FindHandle();
         }
 
         private void FindTargetButton_Click(object sender, EventArgs e)
         {
-            DisableControls();
-            SyncSettingsToMemory();
-            process = new Process(
-                ProcessGenerator.GenerateFindTargetProcess(),
-                ref wndItem,
-                false,
-                null);
-            process.ResultSend += new Process.ResultSendNotifer(OnResultReceive);
-            process.WndChange += new Process.WndChangeNotifier(OnWndChange);
-            process.ProcessFinish += new Process.ProcessFinishNotifer(OnProcessFinish);
-            t = new Thread(new ThreadStart(process.Go))
-            {
-                IsBackground = true
-            };
-            t.Start();
+            mainFormController.FindTarget();
         }
 
         private void CheckPositionButton_Click(object sender, EventArgs e)
         {
-            DisableControls();
-            SyncSettingsToMemory();
-            if (matrix == null)
-            {
-                MessageBox.Show("未获取控件坐标!", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            DisableControls();
-            process = new Process(
-                ProcessGenerator.GenerateCheckPositionProcess(ref matrix),
-                ref wndItem,
-                false,
-                null);
-            process.ResultSend += new Process.ResultSendNotifer(OnResultReceive);
-            process.ProcessFinish += new Process.ProcessFinishNotifer(OnProcessFinish);
-            t = new Thread(new ThreadStart(process.Go))
-            {
-                IsBackground = true
-            };
-            t.Start();
+            mainFormController.CheckExportPoint();
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (process != null)
-            {
-                process.IsRunning = false;
-            }
-            if (MessageBox.Show("真的要退出吗？", Application.ProductName, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Cancel)
+            if (!mainFormController.FormClosing())
             {
                 e.Cancel = true;
             }
@@ -365,10 +283,49 @@ namespace ExperimentHelper
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            SyncSettingsToMemory();
-            Settings.SaveSettings();
-            Dispose();
-            Application.Exit();
+            mainFormController.Exit();
+        }
+
+        public void UpdateResultItem(ResultItem result)
+        {
+#if DEBUG
+            Console.WriteLine("新写入 log 数据: " + result.ToString());
+#endif
+            SetRichTextBox(logRichTextBox, result);
+        }
+
+        public void UpdateProcessResult(ResultItem result)
+        {
+#if DEBUG
+            Console.WriteLine("Process 状态更新: " + result.ToString());
+#endif
+            if (result.LogState == ResultItem.States.ThreadStart)
+                mainFormController.ThreadStart();
+            else
+                mainFormController.ThreadFinish();
+        }
+
+        public void UpdateWindowHandle(WindowHandle handle)
+        {
+            SetControlText(parentWndValueTextBox, String.Format("0x{0:x8}", handle.GetParentHandle().ToInt32()));
+            SetControlText(currentWndValueTextBox, String.Format("0x{0:x8}", handle.GetCurrentHandle().ToInt32()));
+        }
+
+        public void UpdateTargetRectangle(TargetRectangle rectangle)
+        {
+            SetControlText(targetLocationLabel, rectangle.ToString());
+        }
+
+        public bool ShowMessageBox(string messageContent, bool hasOKCanelButton)
+        {
+            if (hasOKCanelButton)
+            {
+                return (MessageBox.Show(messageContent, Application.ProductName, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.OK);
+            }
+            else
+            {
+                return (MessageBox.Show(messageContent, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1) == DialogResult.OK);
+            }
         }
     }
 }

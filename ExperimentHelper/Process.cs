@@ -1,14 +1,14 @@
-﻿using System;
+﻿using ExperimentHelper.Util;
+using ExperimentHelper.Basic;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows.Forms;
 
 namespace ExperimentHelper
 {
 
-    class Process
+    class ProcessThread
     {
         #region 变量声明初始化部分
         public enum ProcessTypeFlags
@@ -22,13 +22,13 @@ namespace ExperimentHelper
             MOUSE_LBUTTON_CLICK_WM = 11, MOUSE_LBUTTON_CLICK_MOUSEEVENT = 12, MOUSE_MOVE = 13,
         };
 
-        private Base.RECT rect;
+        private StructComponent.RECT rect;
 
-        private WndItem wndItem;
+        private WindowHandle wndItem;
         private List<IntPtr> wnds;
         private List<ProcessItem> procs;
         private bool needMoreProc;
-        private Process nextProc;
+        private ProcessThread nextProc;
         private bool isRunning = true;
         public bool IsRunning { get => isRunning; set => isRunning = value; }
         #endregion
@@ -44,9 +44,9 @@ namespace ExperimentHelper
             }
         }
 
-        public delegate void WndChangeNotifier(WndItem wnd);
+        public delegate void WndChangeNotifier(WindowHandle wnd);
         public event WndChangeNotifier WndChange;
-        public void OnWndChange(WndItem wnd)
+        public void OnWndChange(WindowHandle wnd)
         {
             if (WndChange != null)
             {
@@ -54,9 +54,9 @@ namespace ExperimentHelper
             }
         }
 
-        public delegate void ProcessFinishNotifer(bool needMoreProc, Process nextProc);
+        public delegate void ProcessFinishNotifer(bool needMoreProc, ProcessThread nextProc);
         public event ProcessFinishNotifer ProcessFinish;
-        public void OnProcessFinish(bool needMoreProc, Process nextProc)
+        public void OnProcessFinish(bool needMoreProc, ProcessThread nextProc)
         {
             if (ProcessFinish != null)
             {
@@ -65,7 +65,7 @@ namespace ExperimentHelper
         }
         #endregion
 
-        public Process(ProcessItem proc, ref WndItem wnd, bool needMoreProc, Process nextProc)
+        public ProcessThread(ProcessItem proc, ref WindowHandle wnd, bool needMoreProc, ProcessThread nextProc)
         {
             procs = new List<ProcessItem>
             {
@@ -76,7 +76,7 @@ namespace ExperimentHelper
             this.nextProc = nextProc;
         }
 
-        public Process(List<ProcessItem> procs, ref WndItem wnd, bool needMoreProc, Process nextProc)
+        public ProcessThread(List<ProcessItem> procs, ref WindowHandle wnd, bool needMoreProc, ProcessThread nextProc)
         {
             this.procs = procs;
             wndItem = wnd;
@@ -95,7 +95,7 @@ namespace ExperimentHelper
         }
 
         /// <summary>
-        /// Process 功能执行入口
+        /// ProcessThread 功能执行入口
         /// </summary>
         public void Go()
         {
@@ -477,12 +477,12 @@ namespace ExperimentHelper
             }
             else
             {
-                Base.RECT rect = new Base.RECT();
+                StructComponent.RECT rect = new StructComponent.RECT();
                 Win32.GetClientRect(wndItem.CurrentWnd, out rect);
 #if DEBUG
                 Console.WriteLine("获取到指定句柄变换前的矩形: " + rect.ToString());
 #endif
-                Base.POINT point = new Base.POINT
+                StructComponent.POINT point = new StructComponent.POINT
                 {
                     X = rect.Left,
                     Y = rect.Bottom
@@ -532,7 +532,7 @@ namespace ExperimentHelper
             // 行起始位置
             uint rowStartPosition = proc.Rectangle.Top + rowDeviation;
             // 初始化目标点结构体矩阵数组
-            Base.POINT[,] matrix = new Base.POINT[Settings.ROWS_COUNT, Settings.COLUMNS_COUNT];
+            StructComponent.POINT[,] matrix = new StructComponent.POINT[Settings.ROWS_COUNT, Settings.COLUMNS_COUNT];
             // 计算目标点矩阵的坐标
             for (int i = 0; i < Settings.ROWS_COUNT; i++, rowStartPosition += rowCellInterval)  // 完成一行后加上行间隔
             {

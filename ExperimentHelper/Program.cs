@@ -1,4 +1,8 @@
-﻿using System;
+﻿using ExperimentHelper.Basic;
+using ExperimentHelper.Controll;
+using ExperimentHelper.Interface;
+using ExperimentHelper.Model;
+using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 
@@ -12,18 +16,21 @@ namespace ExperimentHelper
         [STAThread]
         static void Main()
         {
+            WindowHandle handle = WindowHandle.GetInstance();
+            SettingComponent settings = SettingComponent.GetInstance();
+            TargetRectangle rectangle = TargetRectangle.GetInstance();
+            ExportPointMatrix matrix = ExportPointMatrix.GetInstance();
             if (RunningInstance() == null)
             {
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new MainForm());
+                Application.Run(new MainForm(handle, rectangle, settings, matrix));
             }
             else
             {
                 MessageBox.Show("有一个和本程序相同的应用程序已经在运行, 请不要同时运行多个本程序.\n\n这个程序即将退出。", 
                     Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
         }
 
         static System.Diagnostics.Process RunningInstance()

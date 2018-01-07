@@ -1,9 +1,10 @@
-﻿using System;
+﻿using ExperimentHelper.Basic;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace ExperimentHelper
+namespace ExperimentHelper.Util
 {
     public class Win32
     {
@@ -64,9 +65,9 @@ namespace ExperimentHelper
         [DllImport("user32.dll")]
         public static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, UIntPtr dwExtraInfo);
         [DllImport("user32.dll")]
-        public static extern bool GetClientRect(IntPtr hwnd, out Base.RECT lpRect);
+        public static extern bool GetClientRect(IntPtr hwnd, out StructComponent.RECT lpRect);
         [DllImport("user32.dll")]
-        public static extern int ClientToScreen(IntPtr hwnd, ref Base.POINT lpPoint);
+        public static extern int ClientToScreen(IntPtr hwnd, ref StructComponent.POINT lpPoint);
     }
 }
 
