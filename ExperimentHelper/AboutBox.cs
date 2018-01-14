@@ -99,5 +99,10 @@ namespace ExperimentHelper
             }
         }
         #endregion
+
+        private void OkButton_Click(object sender, EventArgs e)
+        {
+            this.Dispose();
+        }
     }
 }

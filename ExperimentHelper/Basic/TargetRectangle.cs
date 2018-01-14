@@ -48,6 +48,11 @@ namespace ExperimentHelper.Basic
             return bottom;
         }
 
+        public override string ToString()
+        {
+            return string.Format("L:{0},T:{1},R:{2},B:{3}", left, top, right, bottom);
+        }
+
         public void SetRectangle(uint left, uint top, uint right, uint bottom)
         {
             this.left = left;

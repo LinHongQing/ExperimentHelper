@@ -9,13 +9,13 @@ namespace ExperimentHelper.Model
     {
         private SettingComponent settings;
 
-        private const int DEFAULT_SHORT_STEP_DELAY = 50;
-        private const int DEFAULT_MEDIUM_STEP_DELAY = 500;
-        private const int DEFAULT_LONG_STEP_DELAY = 2000;
-        private const int DEFAULT_COLUMNS_COUNT = 12;     // 默认列数
-        private const int DEFAULT_ROWS_COUNT = 8;         // 默认行数
-        private const int DEFAULT_COLUMN_DEVIATION = 20;
-        private const int DEFAULT_ROW_DEVIATION = 10;
+        private const int DEFAULT_STEP_DELAY = 50;              // 默认步骤延迟
+        private const int DEFAULT_RETRY_STEP_DELAY = 1000;      // 默认重试延迟
+        private const int DEFAULT_MAXIMUM_NUMBER_OF_RETRIES = 3;// 默认重试次数
+        private const int DEFAULT_COLUMNS_COUNT = 12;           // 默认列数
+        private const int DEFAULT_ROWS_COUNT = 8;               // 默认行数
+        private const int DEFAULT_COLUMN_DEVIATION = 20;        // 默认列偏移
+        private const int DEFAULT_ROW_DEVIATION = 10;           // 默认行偏移
         private readonly string[] defaultRowsDescription = { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L" };
         private readonly string[] defaultColumnsDescription = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12" };
 
@@ -59,9 +59,9 @@ namespace ExperimentHelper.Model
                     instance.SetExportPointMatrixItem(i, j, item);
                 }
             }
-            settings.ShortStepDelay = DEFAULT_SHORT_STEP_DELAY;
-            settings.MediumStepDelay = DEFAULT_MEDIUM_STEP_DELAY;
-            settings.LongStepDelay = DEFAULT_LONG_STEP_DELAY;
+            settings.StepDelay = DEFAULT_STEP_DELAY;
+            settings.RetryStepDelay = DEFAULT_RETRY_STEP_DELAY;
+            settings.MaximumNumberOfRetries = DEFAULT_MAXIMUM_NUMBER_OF_RETRIES;
             settings.RowDeviation = DEFAULT_ROW_DEVIATION;
             settings.ColumnDeviation = DEFAULT_COLUMN_DEVIATION;
         }
@@ -81,9 +81,9 @@ namespace ExperimentHelper.Model
                     {
                         using (BinaryReader r = new BinaryReader(fs))
                         {
-                            settings.ShortStepDelay = r.ReadInt32();
-                            settings.MediumStepDelay = r.ReadInt32();
-                            settings.LongStepDelay = r.ReadInt32();
+                            settings.StepDelay = r.ReadInt32();
+                            settings.RetryStepDelay = r.ReadInt32();
+                            settings.MaximumNumberOfRetries = r.ReadInt32();
                             int rowsCount = r.ReadInt32();
                             int columnsCount = r.ReadInt32();
                             settings.RowDeviation = r.ReadInt32();
@@ -137,9 +137,9 @@ namespace ExperimentHelper.Model
                 {
                     using (BinaryWriter w = new BinaryWriter(fs))
                     {
-                        w.Write(settings.ShortStepDelay);
-                        w.Write(settings.MediumStepDelay);
-                        w.Write(settings.LongStepDelay);
+                        w.Write(settings.StepDelay);
+                        w.Write(settings.RetryStepDelay);
+                        w.Write(settings.MaximumNumberOfRetries);
                         int rowsCount = instance.GetMatrixRowCount();
                         int columnsCount = instance.GetMatrixColumnCount();
                         w.Write(rowsCount);

@@ -7,6 +7,5 @@ namespace ExperimentHelper.Interface
         void RegisterResultItemObserver(IResultObserver observer);
         void RemoveResultItemObserver(IResultObserver observer);
         void NotifyAllResultItemObservers(ResultItem result);
-        void NofityAllProcessResultObservers(ResultItem result);
     }
 }

@@ -1,4 +1,5 @@
-﻿using ExperimentHelper.Interface;
+﻿using ExperimentHelper.Basic;
+using ExperimentHelper.Interface;
 using ExperimentHelper.Util;
 
 namespace ExperimentHelper.Controll
@@ -19,7 +20,7 @@ namespace ExperimentHelper.Controll
         public void About()
         {
             AboutBox aboutBox = new AboutBox();
-            aboutBox.ShowDialog();
+            aboutBox.Show();
         }
 
         public void CheckExportPoint()
@@ -75,20 +76,31 @@ namespace ExperimentHelper.Controll
 
         public bool FormClosing()
         {
-            return view.ShowMessageBox("是否关闭程序", true);
+            return view.ShowQuestionMessageBox("是否关闭程序");
         }
 
-        public void ThreadStart()
+        public void RunningMessageReceived(ResultItem result)
         {
-            view.DisableAllControls();
-            view.SetControlText(MainForm.ControlsName.BTN_BEGIN, "停止");
-            view.SetControlEnabled(MainForm.ControlsName.BTN_BEGIN, true);
-        }
-
-        public void ThreadFinish()
-        {
-            view.SetControlText(MainForm.ControlsName.BTN_BEGIN, "开始");
-            view.EnableAllControls();
+            switch(result.LogState)
+            {
+                case ResultItem.States.WARNING:
+                    break;
+                case ResultItem.States.ERROR:
+                    view.ShowErrorMessageBox(result.LogMessage);
+                    break;
+                case ResultItem.States.ThreadStart:
+                    view.DisableAllControls();
+                    view.SetControlText(MainForm.ControlsName.BTN_BEGIN, "停止");
+                    view.SetControlEnabled(MainForm.ControlsName.BTN_BEGIN, true);
+                    break;
+                case ResultItem.States.ThreadFinish:
+                    view.SetControlText(MainForm.ControlsName.BTN_BEGIN, "开始");
+                    view.EnableAllControls();
+                    view.ShowInformationMessageBox(result.LogMessage);
+                    break;
+                case ResultItem.States.OK:
+                    break;
+            }
         }
     }
 }

@@ -1,13 +1,12 @@
 ﻿using ExperimentHelper.Basic;
+using ExperimentHelper.Controll;
+using ExperimentHelper.Interface;
+using ExperimentHelper.Model;
+using ExperimentHelper.Util;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
-using System.Threading;
-using ExperimentHelper.Interface;
-using System.Collections.Generic;
-using ExperimentHelper.Util;
-using ExperimentHelper.Controll;
-using ExperimentHelper.Model;
 
 namespace ExperimentHelper
 {
@@ -21,7 +20,7 @@ namespace ExperimentHelper
             TEXTBOX_INPUT_TITLE, TEXTBOX_INPUT_STRING_PARAM, TEXTBOX_INPUT_INT_PARAM,
             COMBOBOX_SELECT_OPERATION,
             BTN_CHECK_TITLE, BTN_GET_RECTANGLE, BTN_SELECT_EXPORT_POINT, BTN_CHECK_EXPORT_POINT_TARGET, BTN_BEGIN,
-            BTN_ABOUT, BTN_DEBUG, NUMBERICUPDOWN_SHORT_DELAY, NUMBERICUPDOWN_MEDIUM_DELAY, NUMBERICUPDOWN_LONG_DELAY
+            BTN_ABOUT, BTN_DEBUG, NUMBERICUPDOWN_STEP_DELAY, NUMBERICUPDOWN_RETRY_DELAY, NUMBERICUPDOWN_MAXIMUM_NUMBER_OF_RETRIES
         }
 
         private class ComboBoxItem
@@ -63,9 +62,9 @@ namespace ExperimentHelper
                 { ControlsName.BTN_BEGIN, startButton },
                 { ControlsName.BTN_ABOUT, aboutButton },
                 { ControlsName.BTN_DEBUG, excuteDebugProcessButton },
-                { ControlsName.NUMBERICUPDOWN_SHORT_DELAY, shortDelayNumericUpDown },
-                { ControlsName.NUMBERICUPDOWN_MEDIUM_DELAY, mediumDaleyNumericUpDown },
-                { ControlsName.NUMBERICUPDOWN_LONG_DELAY, longDelayNumericUpDown }
+                { ControlsName.NUMBERICUPDOWN_STEP_DELAY, stepDelayNumericUpDown },
+                { ControlsName.NUMBERICUPDOWN_RETRY_DELAY, retryDaleyNumericUpDown },
+                { ControlsName.NUMBERICUPDOWN_MAXIMUM_NUMBER_OF_RETRIES, maximumNumberOfRetriesNumericUpDown }
             };
         }
 
@@ -145,6 +144,8 @@ namespace ExperimentHelper
                 switch (result.LogState)
                 {
                     case ResultItem.States.OK:
+                    case ResultItem.States.ThreadStart:
+                    case ResultItem.States.ThreadFinish:
                         richTextBox.SelectionColor = Color.LightGreen;
                         break;
                     case ResultItem.States.WARNING:
@@ -171,12 +172,12 @@ namespace ExperimentHelper
             SettingComponent settings = SettingComponent.GetInstance();
             controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_TITLE, out Control ctrl);
             ctrl.Text = settings.SearchTitle;
-            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_SHORT_DELAY, out ctrl);
-            ctrl.Text = settings.ShortStepDelay.ToString();
-            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_MEDIUM_DELAY, out ctrl);
-            ctrl.Text = settings.MediumStepDelay.ToString();
-            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_LONG_DELAY, out ctrl);
-            ctrl.Text = settings.LongStepDelay.ToString();
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_STEP_DELAY, out ctrl);
+            ctrl.Text = settings.StepDelay.ToString();
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_RETRY_DELAY, out ctrl);
+            ctrl.Text = settings.RetryStepDelay.ToString();
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_MAXIMUM_NUMBER_OF_RETRIES, out ctrl);
+            ctrl.Text = settings.MaximumNumberOfRetries.ToString();
             controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_STRING_PARAM, out ctrl);
             ctrl.Text = settings.StringParam;
             controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_INT_PARAM, out ctrl);
@@ -190,12 +191,12 @@ namespace ExperimentHelper
             SettingComponent settings = SettingComponent.GetInstance();
             controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_TITLE, out Control ctrl);
             settings.SearchTitle = ctrl.Text;
-            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_SHORT_DELAY, out ctrl);
-            settings.ShortStepDelay = int.Parse(ctrl.Text);
-            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_MEDIUM_DELAY, out ctrl);
-            settings.MediumStepDelay = int.Parse(ctrl.Text);
-            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_LONG_DELAY, out ctrl);
-            settings.LongStepDelay = int.Parse(ctrl.Text);
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_STEP_DELAY, out ctrl);
+            settings.StepDelay = int.Parse(ctrl.Text);
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_RETRY_DELAY, out ctrl);
+            settings.RetryStepDelay = int.Parse(ctrl.Text);
+            controlsDict.TryGetValue(ControlsName.NUMBERICUPDOWN_MAXIMUM_NUMBER_OF_RETRIES, out ctrl);
+            settings.MaximumNumberOfRetries = int.Parse(ctrl.Text);
             controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_STRING_PARAM, out ctrl);
             settings.StringParam = ctrl.Text;
             controlsDict.TryGetValue(ControlsName.TEXTBOX_INPUT_INT_PARAM, out ctrl);
@@ -292,17 +293,7 @@ namespace ExperimentHelper
             Console.WriteLine("新写入 log 数据: " + result.ToString());
 #endif
             SetRichTextBox(logRichTextBox, result);
-        }
-
-        public void UpdateProcessResult(ResultItem result)
-        {
-#if DEBUG
-            Console.WriteLine("Process 状态更新: " + result.ToString());
-#endif
-            if (result.LogState == ResultItem.States.ThreadStart)
-                mainFormController.ThreadStart();
-            else
-                mainFormController.ThreadFinish();
+            mainFormController.RunningMessageReceived(result);
         }
 
         public void UpdateWindowHandle(WindowHandle handle)
@@ -316,16 +307,24 @@ namespace ExperimentHelper
             SetControlText(targetLocationLabel, rectangle.ToString());
         }
 
-        public bool ShowMessageBox(string messageContent, bool hasOKCanelButton)
+        public bool ShowQuestionMessageBox(string messageContent)
         {
-            if (hasOKCanelButton)
-            {
-                return (MessageBox.Show(messageContent, Application.ProductName, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.OK);
-            }
-            else
-            {
-                return (MessageBox.Show(messageContent, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1) == DialogResult.OK);
-            }
+            return (MessageBox.Show(messageContent, Application.ProductName, MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.OK);
+        }
+
+        public void ShowInformationMessageBox(String messageContent)
+        {
+            MessageBox.Show(messageContent, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        public void ShowWarningMessageBox(String messageContent)
+        {
+            MessageBox.Show(messageContent, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+
+        public void ShowErrorMessageBox(String messageContent)
+        {
+            MessageBox.Show(messageContent, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }

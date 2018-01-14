@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ExperimentHelper.Basic;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -15,7 +16,6 @@ namespace ExperimentHelper.Interface
         void CheckExportPoint();
         void ExecuteOperation();
         void About();
-        void ThreadStart();
-        void ThreadFinish();
+        void RunningMessageReceived(ResultItem result);
     }
 }

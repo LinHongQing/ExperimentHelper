@@ -32,12 +32,12 @@
             this.controlGroup = new System.Windows.Forms.GroupBox();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.mainTabPage = new System.Windows.Forms.TabPage();
-            this.longDelayLabel = new System.Windows.Forms.Label();
-            this.mediumDelayLabel = new System.Windows.Forms.Label();
-            this.shortDelaylabel = new System.Windows.Forms.Label();
-            this.longDelayNumericUpDown = new System.Windows.Forms.NumericUpDown();
-            this.mediumDaleyNumericUpDown = new System.Windows.Forms.NumericUpDown();
-            this.shortDelayNumericUpDown = new System.Windows.Forms.NumericUpDown();
+            this.maximumNumberOfRetriesLabel = new System.Windows.Forms.Label();
+            this.retryDelayLabel = new System.Windows.Forms.Label();
+            this.stepDelaylabel = new System.Windows.Forms.Label();
+            this.maximumNumberOfRetriesNumericUpDown = new System.Windows.Forms.NumericUpDown();
+            this.retryDaleyNumericUpDown = new System.Windows.Forms.NumericUpDown();
+            this.stepDelayNumericUpDown = new System.Windows.Forms.NumericUpDown();
             this.checkPositionButton = new System.Windows.Forms.Button();
             this.chooseExportPositionButton = new System.Windows.Forms.Button();
             this.targetLocationLabel = new System.Windows.Forms.Label();
@@ -66,9 +66,9 @@
             this.controlGroup.SuspendLayout();
             this.tabControl.SuspendLayout();
             this.mainTabPage.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.longDelayNumericUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.mediumDaleyNumericUpDown)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.shortDelayNumericUpDown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.maximumNumberOfRetriesNumericUpDown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.retryDaleyNumericUpDown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.stepDelayNumericUpDown)).BeginInit();
             this.debugTabPage.SuspendLayout();
             this.logOutputGroupBox.SuspendLayout();
             this.SuspendLayout();
@@ -99,12 +99,12 @@
             // 
             // mainTabPage
             // 
-            this.mainTabPage.Controls.Add(this.longDelayLabel);
-            this.mainTabPage.Controls.Add(this.mediumDelayLabel);
-            this.mainTabPage.Controls.Add(this.shortDelaylabel);
-            this.mainTabPage.Controls.Add(this.longDelayNumericUpDown);
-            this.mainTabPage.Controls.Add(this.mediumDaleyNumericUpDown);
-            this.mainTabPage.Controls.Add(this.shortDelayNumericUpDown);
+            this.mainTabPage.Controls.Add(this.maximumNumberOfRetriesLabel);
+            this.mainTabPage.Controls.Add(this.retryDelayLabel);
+            this.mainTabPage.Controls.Add(this.stepDelaylabel);
+            this.mainTabPage.Controls.Add(this.maximumNumberOfRetriesNumericUpDown);
+            this.mainTabPage.Controls.Add(this.retryDaleyNumericUpDown);
+            this.mainTabPage.Controls.Add(this.stepDelayNumericUpDown);
             this.mainTabPage.Controls.Add(this.checkPositionButton);
             this.mainTabPage.Controls.Add(this.chooseExportPositionButton);
             this.mainTabPage.Controls.Add(this.targetLocationLabel);
@@ -124,83 +124,78 @@
             this.mainTabPage.Text = "主面板";
             this.mainTabPage.UseVisualStyleBackColor = true;
             // 
-            // longDelayLabel
+            // maximumNumberOfRetriesLabel
             // 
-            this.longDelayLabel.AutoSize = true;
-            this.longDelayLabel.Location = new System.Drawing.Point(399, 104);
-            this.longDelayLabel.Name = "longDelayLabel";
-            this.longDelayLabel.Size = new System.Drawing.Size(89, 20);
-            this.longDelayLabel.TabIndex = 14;
-            this.longDelayLabel.Text = "长延迟(ms):";
+            this.maximumNumberOfRetriesLabel.AutoSize = true;
+            this.maximumNumberOfRetriesLabel.Location = new System.Drawing.Point(399, 104);
+            this.maximumNumberOfRetriesLabel.Name = "maximumNumberOfRetriesLabel";
+            this.maximumNumberOfRetriesLabel.Size = new System.Drawing.Size(103, 20);
+            this.maximumNumberOfRetriesLabel.TabIndex = 14;
+            this.maximumNumberOfRetriesLabel.Text = "最大重试次数:";
             // 
-            // mediumDelayLabel
+            // retryDelayLabel
             // 
-            this.mediumDelayLabel.AutoSize = true;
-            this.mediumDelayLabel.Location = new System.Drawing.Point(198, 104);
-            this.mediumDelayLabel.Name = "mediumDelayLabel";
-            this.mediumDelayLabel.Size = new System.Drawing.Size(89, 20);
-            this.mediumDelayLabel.TabIndex = 14;
-            this.mediumDelayLabel.Text = "中延迟(ms):";
+            this.retryDelayLabel.AutoSize = true;
+            this.retryDelayLabel.Location = new System.Drawing.Point(203, 104);
+            this.retryDelayLabel.Name = "retryDelayLabel";
+            this.retryDelayLabel.Size = new System.Drawing.Size(119, 20);
+            this.retryDelayLabel.TabIndex = 14;
+            this.retryDelayLabel.Text = "重试间延迟(ms):";
             // 
-            // shortDelaylabel
+            // stepDelaylabel
             // 
-            this.shortDelaylabel.AutoSize = true;
-            this.shortDelaylabel.Location = new System.Drawing.Point(7, 104);
-            this.shortDelaylabel.Name = "shortDelaylabel";
-            this.shortDelaylabel.Size = new System.Drawing.Size(89, 20);
-            this.shortDelaylabel.TabIndex = 14;
-            this.shortDelaylabel.Text = "短延迟(ms):";
+            this.stepDelaylabel.AutoSize = true;
+            this.stepDelaylabel.Location = new System.Drawing.Point(7, 104);
+            this.stepDelaylabel.Name = "stepDelaylabel";
+            this.stepDelaylabel.Size = new System.Drawing.Size(119, 20);
+            this.stepDelaylabel.TabIndex = 14;
+            this.stepDelaylabel.Text = "步骤间延迟(ms):";
             // 
-            // longDelayNumericUpDown
+            // maximumNumberOfRetriesNumericUpDown
             // 
-            this.longDelayNumericUpDown.Increment = new decimal(new int[] {
+            this.maximumNumberOfRetriesNumericUpDown.Location = new System.Drawing.Point(507, 102);
+            this.maximumNumberOfRetriesNumericUpDown.Maximum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            this.maximumNumberOfRetriesNumericUpDown.Name = "maximumNumberOfRetriesNumericUpDown";
+            this.maximumNumberOfRetriesNumericUpDown.Size = new System.Drawing.Size(57, 27);
+            this.maximumNumberOfRetriesNumericUpDown.TabIndex = 13;
+            // 
+            // retryDaleyNumericUpDown
+            // 
+            this.retryDaleyNumericUpDown.Increment = new decimal(new int[] {
             100,
             0,
             0,
             0});
-            this.longDelayNumericUpDown.Location = new System.Drawing.Point(494, 102);
-            this.longDelayNumericUpDown.Maximum = new decimal(new int[] {
+            this.retryDaleyNumericUpDown.Location = new System.Drawing.Point(322, 102);
+            this.retryDaleyNumericUpDown.Maximum = new decimal(new int[] {
             10000,
             0,
             0,
             0});
-            this.longDelayNumericUpDown.Name = "longDelayNumericUpDown";
-            this.longDelayNumericUpDown.Size = new System.Drawing.Size(71, 27);
-            this.longDelayNumericUpDown.TabIndex = 13;
+            this.retryDaleyNumericUpDown.Name = "retryDaleyNumericUpDown";
+            this.retryDaleyNumericUpDown.Size = new System.Drawing.Size(71, 27);
+            this.retryDaleyNumericUpDown.TabIndex = 13;
             // 
-            // mediumDaleyNumericUpDown
+            // stepDelayNumericUpDown
             // 
-            this.mediumDaleyNumericUpDown.Increment = new decimal(new int[] {
+            this.stepDelayNumericUpDown.Increment = new decimal(new int[] {
             100,
             0,
             0,
             0});
-            this.mediumDaleyNumericUpDown.Location = new System.Drawing.Point(293, 102);
-            this.mediumDaleyNumericUpDown.Maximum = new decimal(new int[] {
+            this.stepDelayNumericUpDown.Location = new System.Drawing.Point(127, 102);
+            this.stepDelayNumericUpDown.Maximum = new decimal(new int[] {
             10000,
             0,
             0,
             0});
-            this.mediumDaleyNumericUpDown.Name = "mediumDaleyNumericUpDown";
-            this.mediumDaleyNumericUpDown.Size = new System.Drawing.Size(71, 27);
-            this.mediumDaleyNumericUpDown.TabIndex = 13;
-            // 
-            // shortDelayNumericUpDown
-            // 
-            this.shortDelayNumericUpDown.Increment = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
-            this.shortDelayNumericUpDown.Location = new System.Drawing.Point(102, 102);
-            this.shortDelayNumericUpDown.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.shortDelayNumericUpDown.Name = "shortDelayNumericUpDown";
-            this.shortDelayNumericUpDown.Size = new System.Drawing.Size(71, 27);
-            this.shortDelayNumericUpDown.TabIndex = 13;
+            this.stepDelayNumericUpDown.Name = "stepDelayNumericUpDown";
+            this.stepDelayNumericUpDown.Size = new System.Drawing.Size(71, 27);
+            this.stepDelayNumericUpDown.TabIndex = 13;
             // 
             // checkPositionButton
             // 
@@ -462,9 +457,9 @@
             this.tabControl.ResumeLayout(false);
             this.mainTabPage.ResumeLayout(false);
             this.mainTabPage.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.longDelayNumericUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.mediumDaleyNumericUpDown)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.shortDelayNumericUpDown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.maximumNumberOfRetriesNumericUpDown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.retryDaleyNumericUpDown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.stepDelayNumericUpDown)).EndInit();
             this.debugTabPage.ResumeLayout(false);
             this.debugTabPage.PerformLayout();
             this.logOutputGroupBox.ResumeLayout(false);
@@ -501,12 +496,12 @@
         private System.Windows.Forms.Button chooseExportPositionButton;
         private System.Windows.Forms.Label step3DescriptionLabel;
         private System.Windows.Forms.Button checkPositionButton;
-        private System.Windows.Forms.Label longDelayLabel;
-        private System.Windows.Forms.Label mediumDelayLabel;
-        private System.Windows.Forms.Label shortDelaylabel;
-        private System.Windows.Forms.NumericUpDown longDelayNumericUpDown;
-        private System.Windows.Forms.NumericUpDown mediumDaleyNumericUpDown;
-        private System.Windows.Forms.NumericUpDown shortDelayNumericUpDown;
+        private System.Windows.Forms.Label maximumNumberOfRetriesLabel;
+        private System.Windows.Forms.Label retryDelayLabel;
+        private System.Windows.Forms.Label stepDelaylabel;
+        private System.Windows.Forms.NumericUpDown maximumNumberOfRetriesNumericUpDown;
+        private System.Windows.Forms.NumericUpDown retryDaleyNumericUpDown;
+        private System.Windows.Forms.NumericUpDown stepDelayNumericUpDown;
     }
 }
 

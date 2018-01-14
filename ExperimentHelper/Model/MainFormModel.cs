@@ -1,11 +1,9 @@
 ﻿using ExperimentHelper.Basic;
-using ExperimentHelper.Controll;
 using ExperimentHelper.Interface;
 using ExperimentHelper.Process;
 using ExperimentHelper.Util;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 
 namespace ExperimentHelper.Model
@@ -50,15 +48,6 @@ namespace ExperimentHelper.Model
             settingModel.InitializeSettings();
         }
 
-        public void NofityAllProcessResultObservers(ResultItem result)
-        {
-            for (int i = 0; i < resultItemObservers.Count; i++)
-            {
-                IResultObserver observer = resultItemObservers[i];
-                observer.UpdateProcessResult(result);
-            }
-        }
-
         public void NotifyAllResultItemObservers(ResultItem result)
         {
             for (int i = 0; i < resultItemObservers.Count; i++)
@@ -84,7 +73,7 @@ namespace ExperimentHelper.Model
             {
                 t.Abort();
                 ResultItem rs = new ResultItem(ResultItem.States.ThreadFinish, "中止");
-                NofityAllProcessResultObservers(rs);
+                NotifyAllResultItemObservers(rs);
                 isThreadRunning = false;
             }
             else
@@ -102,34 +91,36 @@ namespace ExperimentHelper.Model
         private void ProcessThread()
         {
             List<IProcessItem> processQueue = ProcessHelper.GenerateProcessQueue(matrix, rectangle, handle, settings);
-            ResultItem rs = new ResultItem(ResultItem.States.ThreadStart, "开始");
-            NofityAllProcessResultObservers(rs);
+            ResultItem rs = new ResultItem(ResultItem.States.ThreadStart, "开始执行操作");
+            NotifyAllResultItemObservers(rs);
             isThreadRunning = true;
-            for (int i = 0, wrongCount = 0; i < processQueue.Count && wrongCount < 3; i++)
+            for (int i = 0, wrongCount = 0; i < processQueue.Count && wrongCount < settings.MaximumNumberOfRetries; i++)
             {
                 try
                 {
                     IProcessItem item = processQueue[i];
                     ResultItem result = item.Execute();
-                    NotifyAllResultItemObservers(result);
                     wrongCount = 0;
-                    Thread.Sleep(settings.ShortStepDelay);
+                    Thread.Sleep(settings.StepDelay);
+                    NotifyAllResultItemObservers(result);
                 }
                 catch (ProcessException e)
                 {
                     i--;
                     wrongCount++;
-
-                    rs = new ResultItem(ResultItem.States.WARNING, e.Message);
+                    if (wrongCount == settings.MaximumNumberOfRetries)
+                        rs = new ResultItem(ResultItem.States.ERROR, "该操作无法完成");
+                    else
+                        rs = new ResultItem(ResultItem.States.WARNING, e.Message + " 正在重试……");
 #if DEBUG
                     Console.WriteLine(rs);
 #endif
+                    Thread.Sleep(settings.RetryStepDelay);
                     NotifyAllResultItemObservers(rs);
-                    Thread.Sleep(settings.MediumStepDelay);
                 }
             }
-            rs = new ResultItem(ResultItem.States.ThreadFinish, "结束");
-            NofityAllProcessResultObservers(rs);
+            rs = new ResultItem(ResultItem.States.ThreadFinish, "操作执行完成");
+            NotifyAllResultItemObservers(rs);
             isThreadRunning = false;
         }
     }
