@@ -13,12 +13,14 @@ namespace ExperimentHelper.Process
         private string titleName;
         private int selectedIndex;
         private List<IntPtr> matchedWindowsHandle;
+        private bool needActive;
 
-        public ProcessItem_FindWindowByName(WindowHandle instance, string titleName, int selectedIndex)
+        public ProcessItem_FindWindowByName(WindowHandle instance, string titleName, int selectedIndex, bool needActive)
         {
             this.instance = instance;
             this.titleName = titleName;
             this.selectedIndex = selectedIndex;
+            this.needActive = needActive;
         }
 
         public class NoSelectedNameOrIndexWindowException : ProcessException
@@ -32,7 +34,17 @@ namespace ExperimentHelper.Process
             Win32.GetWindowText(handle, title, 100);// 取标题
             if (title.ToString().Contains(titleName))// 筛选
             {
-                matchedWindowsHandle.Add(handle);
+                if (needActive)
+                {
+                    if (Win32.GetForegroundWindow() == handle)
+                    {
+                        matchedWindowsHandle.Add(handle);
+                    }
+                }
+                else
+                {
+                    matchedWindowsHandle.Add(handle);
+                }
             }
             return true;
         }

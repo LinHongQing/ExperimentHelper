@@ -96,7 +96,7 @@ namespace ExperimentHelper.Controll
                 case ResultItem.States.ThreadFinish:
                     view.SetControlText(MainForm.ControlsName.BTN_BEGIN, "开始");
                     view.EnableAllControls();
-                    view.ShowInformationMessageBox(result.LogMessage);
+                    // view.ShowInformationMessageBox(result.LogMessage);
                     break;
                 case ResultItem.States.OK:
                     break;

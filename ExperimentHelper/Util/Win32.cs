@@ -67,6 +67,8 @@ namespace ExperimentHelper.Util
         [DllImport("user32.dll")]
         public static extern bool GetClientRect(IntPtr hwnd, out StructComponent.RECT lpRect);
         [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")]
         public static extern int ClientToScreen(IntPtr hwnd, ref StructComponent.POINT lpPoint);
     }
 }

@@ -32,7 +32,7 @@ namespace ExperimentHelper.Util
             switch (settings.ProcessType)
             {
                 case ProcessTypeFlags.MAINBOARD_FIND_HANDLE:
-                    procItem = new ProcessItem_FindWindowByName(handle, settings.SearchTitle, 0);
+                    procItem = new ProcessItem_FindWindowByName(handle, settings.SearchTitle, 0, false);
                     queue.Add(procItem);
                     procItem = new ProcessItem_OverwriteCurrHndl2PrntHndl(handle);
                     queue.Add(procItem);
@@ -80,7 +80,7 @@ namespace ExperimentHelper.Util
                     queue.Add(procItem);
                     break;
                 case ProcessTypeFlags.FIND_WINDOW_BY_NAME:
-                    procItem = new ProcessItem_FindWindowByName(handle, settings.StringParam, settings.IntParam);
+                    procItem = new ProcessItem_FindWindowByName(handle, settings.StringParam, settings.IntParam, false);
                     queue.Add(procItem);
                     break;
                 case ProcessTypeFlags.FIND_CONTROL_BY_CLASSNAME:
@@ -137,7 +137,7 @@ namespace ExperimentHelper.Util
                                 queue.Add(procItem);
                                 /* 弹出图片详情后 */
                                 // 获取主窗口句柄
-                                procItem = new ProcessItem_FindWindowByName(handle, settings.SearchTitle, 0);
+                                procItem = new ProcessItem_FindWindowByName(handle, settings.SearchTitle, 0, true);
                                 queue.Add(procItem);
                                 procItem = new ProcessItem_OverwriteCurrHndl2PrntHndl(handle);
                                 queue.Add(procItem);
@@ -146,16 +146,16 @@ namespace ExperimentHelper.Util
                                 queue.Add(procItem);
                                 procItem = new ProcessItem_OverwriteCurrHndl2PrntHndl(handle);
                                 queue.Add(procItem);
-                                // 找到 ProcessThread... 按钮句柄
-                                procItem = new ProcessItem_FindCtrlByCtrlName(handle, "ProcessThread...", 0);
+                                // 找到 Process... 按钮句柄
+                                procItem = new ProcessItem_FindCtrlByCtrlName(handle, "Process...", 0);
                                 queue.Add(procItem);
-                                // 点击 ProcessThread 按钮
+                                // 点击 Process 按钮
                                 procItem = new ProcessItem_CtrlMouseLeftButtonClick(handle);
                                 queue.Add(procItem);
 
                                 /* 弹出 Image Stitching 后 */
                                 // 获取 Image Stitching 窗口句柄
-                                procItem = new ProcessItem_FindWindowByName(handle, "Image Stitching", 0);
+                                procItem = new ProcessItem_FindWindowByName(handle, "Image Stitching", 0, true);
                                 queue.Add(procItem);
                                 procItem = new ProcessItem_OverwriteCurrHndl2PrntHndl(handle);
                                 queue.Add(procItem);
@@ -183,7 +183,7 @@ namespace ExperimentHelper.Util
                                 for (int i = 0; i < 3; i++)
                                 {
                                     // 找到 Image Processing 窗口句柄
-                                    procItem = new ProcessItem_FindWindowByName(handle, "Image Processing", 0);
+                                    procItem = new ProcessItem_FindWindowByName(handle, "Image Processing", 0, true);
                                     queue.Add(procItem);
                                     procItem = new ProcessItem_OverwriteCurrHndl2PrntHndl(handle);
                                     queue.Add(procItem);
@@ -224,7 +224,7 @@ namespace ExperimentHelper.Util
 
                                     /* 弹出 Image Save Options 窗口后 */
                                     // 获取 Save Image Options 窗口句柄
-                                    procItem = new ProcessItem_FindWindowByName(handle, "Image Save Options", 0);
+                                    procItem = new ProcessItem_FindWindowByName(handle, "Image Save Options", 0, true);
                                     queue.Add(procItem);
                                     procItem = new ProcessItem_OverwriteCurrHndl2PrntHndl(handle);
                                     queue.Add(procItem);
@@ -249,7 +249,7 @@ namespace ExperimentHelper.Util
 
                                     /* 弹出 Save As Picture 窗口后 */
                                     // 获取 Save As Picture 窗口句柄
-                                    procItem = new ProcessItem_FindWindowByName(handle, "Save As Picture", 0);
+                                    procItem = new ProcessItem_FindWindowByName(handle, "Save As Picture", 0, false);
                                     queue.Add(procItem);
                                     procItem = new ProcessItem_OverwriteCurrHndl2PrntHndl(handle);
                                     queue.Add(procItem);
@@ -288,7 +288,7 @@ namespace ExperimentHelper.Util
 
                                 /* 执行完成 Image Processing 窗口操作后 */
                                 // 找到 Image Processing 窗口句柄
-                                procItem = new ProcessItem_FindWindowByName(handle, "Image Processing", 0);
+                                procItem = new ProcessItem_FindWindowByName(handle, "Image Processing", 0, true);
                                 queue.Add(procItem);
                                 procItem = new ProcessItem_OverwriteCurrHndl2PrntHndl(handle);
                                 queue.Add(procItem);
@@ -299,7 +299,7 @@ namespace ExperimentHelper.Util
                                 procItem = new ProcessItem_CtrlMouseLeftButtonClick(handle);
                                 queue.Add(procItem);
                                 // 获取主窗口句柄
-                                procItem = new ProcessItem_FindWindowByName(handle, settings.SearchTitle, 0);
+                                procItem = new ProcessItem_FindWindowByName(handle, settings.SearchTitle, 0, true);
                                 queue.Add(procItem);
                                 procItem = new ProcessItem_OverwriteCurrHndl2PrntHndl(handle);
                                 queue.Add(procItem);
@@ -309,7 +309,7 @@ namespace ExperimentHelper.Util
                                 procItem = new ProcessItem_OverwriteCurrHndl2PrntHndl(handle);
                                 queue.Add(procItem);
                                 // 获取 Close 按钮句柄
-                                procItem = new ProcessItem_FindCtrlByCtrlName(handle, "Close", 0);
+                                procItem = new ProcessItem_FindCtrlByCtrlName(handle, "Close", 1);
                                 queue.Add(procItem);
                                 // 点击 Close 按钮
                                 procItem = new ProcessItem_CtrlMouseLeftButtonClick(handle);
